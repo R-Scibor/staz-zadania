@@ -20,15 +20,15 @@ void Graph::calculateNodePositions() {
     std::vector<std::pair<int, float>> currentLayerAvg;
 
     for(int i=0; i<layerSizes.size(); i++){
-        int startY = (height - layerSizes[i] * YDISTANCE) / 2;
+        int startY = (CANVAS_HEIGHT - layerSizes[i] * YDISTANCE) / 2;
         for(auto& [id, node]: sortedNodes){
             if(node.layer == i){
                 node.x = XDISTANCE * (i+1);
                 if (i == 0) {
-                    currentLayerAvg.push_back({id, 0});
+                    currentLayerAvg.push_back({id, 0.0f});
                 }
                 else {
-                    int avg = 0;
+                    float avg = 0.0f;
                     for (auto parentId : node.parents) {
                         avg += sortedNodes.at(parentId).y;
                     }
