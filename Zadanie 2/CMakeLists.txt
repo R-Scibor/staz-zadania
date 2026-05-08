@@ -28,6 +28,7 @@ target_include_directories(graph_renderer PRIVATE src src/backends)
 add_executable(json_parser_tests tests/JSONParserTest.cpp src/JSONParser.cpp)
 target_link_libraries(json_parser_tests GTest::gtest_main nlohmann_json::nlohmann_json)
 target_include_directories(json_parser_tests PRIVATE src)
+target_compile_definitions(json_parser_tests PRIVATE TEST_DATA_DIR="${CMAKE_SOURCE_DIR}")
 
 add_executable(graph_tests tests/GraphTest.cpp src/Graph.cpp)
 target_link_libraries(graph_tests GTest::gtest_main nlohmann_json::nlohmann_json)
