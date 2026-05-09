@@ -38,16 +38,16 @@ TEST(GraphTest, DiamondNodePlacedOnDeepestLayer) {
 }
 
 TEST(GraphTest, LongPathWinsOverShortPath) {
-    // 1 -> 2 -> 3 -> 4
-    // 1 -> 4  (shortcut)
-    // Node 4 should be on layer 3, not layer 1
+    // 1 -> 3 -> 2 -> 4   (long path)
+    // 1 -> 2             (shortcut)
     std::unordered_map<int, Node> m;
-    m[1] = {1, "A", 0, 0, -1, {2, 4}, {}};
-    m[2] = {2, "B", 0, 0, -1, {3},    {1}};
-    m[3] = {3, "C", 0, 0, -1, {4},    {2}};
-    m[4] = {4, "D", 0, 0, -1, {},     {1, 3}};
+    m[1] = {1, "A", 0, 0, -1, {3, 2}, {}};
+    m[2] = {2, "B", 0, 0, -1, {4},    {1, 3}};
+    m[3] = {3, "C", 0, 0, -1, {2},    {1}};
+    m[4] = {4, "D", 0, 0, -1, {},     {2}};
 
     auto result = Graph().assignLayers(m);
+    EXPECT_EQ(result.at(2).layer, 2);
     EXPECT_EQ(result.at(4).layer, 3);
 }
 

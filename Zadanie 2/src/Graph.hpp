@@ -9,7 +9,7 @@ class Graph {
     private:
     std::unordered_map<int, Node> sortedNodes;
     std::vector<int> layerSizes;
-    void updateLayerSizes(int prevLayer, int childId);
+    bool updateLayerSizes(int prevLayer, int childId);
 
     public:
         std::unordered_map<int, Node> assignLayers(const std::unordered_map<int, Node>& nodeMap);

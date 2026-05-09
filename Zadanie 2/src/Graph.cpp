@@ -1,53 +1,64 @@
 #include "Graph.hpp"
 #include <vector>
+#include <iostream>
 
 
-void Graph::updateLayerSizes(int prevLayer, int childId) {
+bool Graph::updateLayerSizes(int prevLayer, int childId) {
     int nextLayer = prevLayer + 1;
+    bool deepened = false;
     if (nextLayer >= layerSizes.size()) {
         layerSizes.resize(nextLayer + 1, 0);
     }
-    if(sortedNodes[childId].layer < nextLayer){
-        if(sortedNodes[childId].layer != -1)
-            layerSizes[sortedNodes[childId].layer]--;
+    if(sortedNodes.at(childId).layer < nextLayer){
+        if(sortedNodes.at(childId).layer != -1){
+            layerSizes[sortedNodes.at(childId).layer]--;
+            deepened = true;
+        }
 
         sortedNodes[childId].layer = nextLayer;
         layerSizes[nextLayer]++;
     }
+    return deepened;
 }
 
 void Graph::calculateNodePositions() {
-    std::vector<std::pair<int, float>> currentLayerAvg;
+    std::vector<std::vector<int>> nodesByLayer(layerSizes.size());
+    for (auto& [id, node] : sortedNodes) {
+        nodesByLayer[node.layer].push_back(id);
+    }
 
-    for(int i=0; i<layerSizes.size(); i++){
+    for (int i = 0; i < layerSizes.size(); i++) {
         int startY = (CANVAS_HEIGHT - layerSizes[i] * YDISTANCE) / 2;
-        for(auto& [id, node]: sortedNodes){
-            if(node.layer == i){
-                node.x = XDISTANCE * (i+1);
-                if (i == 0) {
-                    currentLayerAvg.push_back({id, 0.0f});
+
+        std::vector<std::pair<int, float>> currentLayerAvg;
+        for (int id : nodesByLayer[i]) {
+            Node& node = sortedNodes.at(id);
+            node.x = XDISTANCE * (i + 1);
+
+            float avg = 0.0f;
+            if (!node.parents.empty()) {
+                for (int parentId : node.parents) {
+                    avg += sortedNodes.at(parentId).y;
                 }
-                else {
-                    float avg = 0.0f;
-                    for (auto parentId : node.parents) {
-                        avg += sortedNodes.at(parentId).y;
-                    }
-                    avg /= node.parents.size();
-                    currentLayerAvg.push_back({id, avg});
-                }
+                avg /= node.parents.size();
             }
+            currentLayerAvg.push_back({id, avg});
         }
-        std::sort(currentLayerAvg.begin(), currentLayerAvg.end(), [](const auto& a, const auto& b){ return a.second < b.second; });
-        for(int j=0; j<currentLayerAvg.size(); j++){
-            sortedNodes[currentLayerAvg[j].first].y = startY + j * YDISTANCE;
+
+        std::sort(currentLayerAvg.begin(), currentLayerAvg.end(),
+                  [](const auto& a, const auto& b) { return a.second < b.second; });
+
+        for (int j = 0; j < currentLayerAvg.size(); j++) {
+            sortedNodes.at(currentLayerAvg[j].first).y = startY + j * YDISTANCE;
         }
-        currentLayerAvg.clear();
     }
 }
 
-
+// We assume that the input graph does not contain cycles. If it does,
+// the function will detect it and print a warning, but the behavior is undefined.
 std::unordered_map<int, Node> Graph::assignLayers(const std::unordered_map<int, Node>& nodeMap) {
     std::vector<int> NodeQueue;
+    std::unordered_map<int, int> popCount;
 
     // Find roots
     for (const auto& [id, node]: nodeMap) {
@@ -61,15 +72,20 @@ std::unordered_map<int, Node> Graph::assignLayers(const std::unordered_map<int, 
     while (!NodeQueue.empty()) {
         int currentId = NodeQueue.back();
         NodeQueue.pop_back();
-        const Node& currentNode = sortedNodes[currentId];
-        int nextLayer = currentNode.layer + 1;
+
+        if (++popCount[currentId] > nodeMap.size()) {
+            std::cerr << "Warning: cycle detected, aborting layout.\n";
+            break;
+        }
+
+        int currentLayer = sortedNodes.at(currentId).layer;
+        const Node& currentNode = nodeMap.at(currentId);
 
         for (int childId : currentNode.children) {
-            if (sortedNodes.find(childId) == sortedNodes.end()) {
-                sortedNodes[childId] = nodeMap.at(childId);
+            auto [it, isNew] = sortedNodes.insert({childId, nodeMap.at(childId)});
+            if (updateLayerSizes(currentLayer, childId) || isNew) {
                 NodeQueue.push_back(childId);
             }
-            updateLayerSizes(currentNode.layer, childId);
         }
     }
 
