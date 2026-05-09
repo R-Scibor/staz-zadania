@@ -43,6 +43,13 @@ int main() {
     graph.calculateNodePositions();
     auto nodes = graph.getSortedNodes();
 
+    std::ofstream out("output.json");
+    if (out.is_open()) {
+        out << parser.serializeJSON(nodes);
+    } else {
+        fprintf(stderr, "Could not open output.json for writing\n");
+    }
+
     GraphRenderer renderer(nodes);
 
     while (!glfwWindowShouldClose(window)) {

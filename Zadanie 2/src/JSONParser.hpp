@@ -8,4 +8,5 @@
 class JSONParser {
 public:
     std::unordered_map<int, Node> parseJSON(const std::string& jsonString);
+    std::string serializeJSON(const std::unordered_map<int, Node>& nodes);
 };
