@@ -6,8 +6,8 @@
 
 class GraphRenderer {
     private:
-        std::unordered_map<int, Node>& nodes;
+        const std::unordered_map<int, Node>& nodes;
     public:
         void draw();
-        GraphRenderer(std::unordered_map<int, Node>& nodes);
+        GraphRenderer(const std::unordered_map<int, Node>& nodes);
 };

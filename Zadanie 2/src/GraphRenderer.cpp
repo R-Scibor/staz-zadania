@@ -1,14 +1,14 @@
 #include "GraphRenderer.hpp"
 #include "imgui.h"
 
-GraphRenderer::GraphRenderer(std::unordered_map<int, Node>& nodes) : nodes(nodes) {
+GraphRenderer::GraphRenderer(const std::unordered_map<int, Node>& nodes) : nodes(nodes) {
 }
 
 void GraphRenderer::draw() {
     for (const auto& [id, node] : nodes) {
         ImVec2 pos(node.x, node.y);
         for(int childId : node.children){
-            ImVec2 childPos(nodes[childId].x, nodes[childId].y);
+            ImVec2 childPos(nodes.at(childId).x, nodes.at(childId).y);
             ImGui::GetForegroundDrawList ()->AddLine(ImVec2(pos.x + NODE_WIDTH, pos.y + NODE_HEIGHT/2), ImVec2(childPos.x, childPos.y + NODE_HEIGHT/2), IM_COL32(255, 255, 255, 255), 2.0f);
         }
     }

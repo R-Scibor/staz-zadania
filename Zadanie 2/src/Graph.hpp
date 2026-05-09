@@ -1,7 +1,7 @@
 #pragma once
 #include "NodeStruct.hpp"
 #include "JSONParser.hpp"
-#include "config.hpp"
+#include "Config.hpp"
 #include <unordered_map>
 #include <vector>
 
@@ -15,7 +15,7 @@ class Graph {
         std::unordered_map<int, Node> assignLayers(const std::unordered_map<int, Node>& nodeMap);
         void calculateNodePositions();
 
-        std::unordered_map<int, Node> getSortedNodes() const {
+        const std::unordered_map<int, Node>& getSortedNodes() const {
             return sortedNodes;
         }
         std::vector<int> getLayerSizes() const {

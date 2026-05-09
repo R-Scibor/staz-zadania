@@ -41,7 +41,7 @@ int main() {
     Graph graph;
     graph.assignLayers(nodeMap);
     graph.calculateNodePositions();
-    auto nodes = graph.getSortedNodes();
+    const auto& nodes = graph.getSortedNodes();
 
     std::ofstream out("output.json");
     if (out.is_open()) {
