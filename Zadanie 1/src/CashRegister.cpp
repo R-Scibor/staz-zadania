@@ -42,6 +42,14 @@ std::optional<std::map<int, int>> CashRegister::makeChange(int amount) const {
     return result;
 }
 
+void CashRegister::deposit(const std::vector<int>& coinsIn) {
+    for (int c : coinsIn) coins[c]++;
+}
+
+void CashRegister::withdraw(const std::map<int, int>& coinsOut) {
+    for (const auto& [denom, count] : coinsOut) coins[denom] -= count;
+}
+
 std::optional<std::map<int, int>> CashRegister::acceptPayment(const std::vector<int>& inserted, int price) {
     if (price < 0) return std::nullopt;
 
@@ -49,14 +57,17 @@ std::optional<std::map<int, int>> CashRegister::acceptPayment(const std::vector<
     for (int c : inserted) total += c;
     if (total < price) return std::nullopt;
 
-    for (int c : inserted) coins[c]++;
-
+    deposit(inserted);
     auto change = makeChange(total - price);
     if (!change) {
         for (int c : inserted) coins[c]--;
         return std::nullopt;
     }
-
-    for (const auto& [denom, count] : *change) coins[denom] -= count;
+    withdraw(*change);
     return change;
+}
+
+void CashRegister::refund(const std::vector<int>& inserted, const std::map<int, int>& change) {
+    for (int c : inserted) coins[c]--;
+    for (const auto& [denom, count] : change) coins[denom] += count;
 }

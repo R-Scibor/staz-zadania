@@ -58,7 +58,7 @@ TEST(CashRegister, SpecExample4_ImpossibleChange) {
 
 // Drawer: 1x 50gr, 4x 20gr. Target: 60gr.
 // Greedy by largest denom: 50 + ??? (need 10gr, none) -> fail.
-// DP: 3x 20gr = 60gr, 3 coins. Should succeed.
+// DP: 3x 20gr = 60gr, 3 coins.
 TEST(CashRegister, ConstrainedSupplyDefeatGreedy) {
     CashRegister r({{50, 1}, {20, 4}});
     auto change = r.makeChange(60);
@@ -109,4 +109,14 @@ TEST(CashRegister, AcceptPaymentCantMakeChangeLeavesDrawerUnchanged) {
     auto change = r.acceptPayment({200, 200}, 350);
     EXPECT_FALSE(change.has_value());
     EXPECT_EQ(r.getCoins(), initial);
+}
+
+TEST(CashRegister, RefundUndoesAcceptPayment) {
+    CashRegister r({{50, 1}, {100, 2}});
+    auto change = r.acceptPayment({200}, 150);
+    ASSERT_TRUE(change.has_value());
+    r.refund({200}, *change);
+    EXPECT_EQ(r.getCoins().at(50), 1);
+    EXPECT_EQ(r.getCoins().at(100), 2);
+    EXPECT_EQ(r.getCoins().at(200), 0);
 }
