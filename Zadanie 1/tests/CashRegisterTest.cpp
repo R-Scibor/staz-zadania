@@ -68,7 +68,6 @@ TEST(CashRegister, ConstrainedSupplyDefeatGreedy) {
     EXPECT_EQ((*change).count(50), 0u);
 }
 
-// Min-coins must be minimum, not any valid combination.
 TEST(CashRegister, PrefersFewerCoins) {
     CashRegister r({{100, 1}, {10, 20}});
     auto change = r.makeChange(100);
