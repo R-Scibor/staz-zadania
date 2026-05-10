@@ -5,9 +5,14 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(GTest REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(nlohmann_json REQUIRED)
 
 add_library(ticketmat_core src/CashRegister.cpp src/TicketStore.cpp)
 target_include_directories(ticketmat_core PUBLIC src)
+
+add_executable(ticketmat_server src/Server.cpp src/main.cpp)
+target_link_libraries(ticketmat_server PRIVATE ticketmat_core Boost::system nlohmann_json::nlohmann_json)
 
 enable_testing()
 
