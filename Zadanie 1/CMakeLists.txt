@@ -14,6 +14,9 @@ target_include_directories(ticketmat_core PUBLIC src)
 add_executable(ticketmat_server src/Server.cpp src/main.cpp)
 target_link_libraries(ticketmat_server PRIVATE ticketmat_core Boost::system nlohmann_json::nlohmann_json)
 
+add_executable(ticketmat_client src/Sale.cpp src/clientMain.cpp)
+target_link_libraries(ticketmat_client PRIVATE ticketmat_core Boost::system nlohmann_json::nlohmann_json)
+
 enable_testing()
 
 add_executable(cash_register_tests tests/CashRegisterTest.cpp)
