@@ -1,5 +1,35 @@
 #include "LogParser.hpp"
 
+#include <algorithm>
+
+static size_t lowerBoundByTimestamp(const std::vector<LogEntry>& entries, const std::string& target) {
+    size_t lo = 0;
+    size_t hi = entries.size();
+    while (lo < hi) {
+        size_t mid = lo + (hi - lo) / 2;
+        if (entries[mid].timestamp < target) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    return lo;
+}
+
+static size_t upperBoundByTimestamp(const std::vector<LogEntry>& entries, const std::string& target) {
+    size_t lo = 0;
+    size_t hi = entries.size();
+    while (lo < hi) {
+        size_t mid = lo + (hi - lo) / 2;
+        if (entries[mid].timestamp <= target) {
+            lo = mid + 1;
+        } else {
+            hi = mid;
+        }
+    }
+    return lo;
+}
+
 std::vector<LogEntry> LogParser::parseLogFile(const std::string& filePath) {
     std::vector<LogEntry> entries;
     std::ifstream file(filePath);
@@ -31,93 +61,71 @@ std::vector<LogEntry> LogParser::parseLogFile(const std::string& filePath) {
 
         entries.push_back(entry);
     }
+    std::sort(entries.begin(), entries.end(),
+              [](const LogEntry& a, const LogEntry& b) { return a.timestamp < b.timestamp; });
     logEntries = entries;
     return entries;
 }
 
 void LogParser::printEntry(LogEntry entry)
 {
-    std::cout << entry.timestamp << " " << entry.logLevel << " " << entry.source << " " << entry.message << std::endl;
+    std::cout << "[" << entry.timestamp << "] [" << entry.logLevel << "] [" << entry.source << "] " << entry.message << std::endl;
 }
 
 void LogParser::printEntries(const std::vector<LogEntry>& entries) {
-    if (entries.empty()) {
-        for (const auto& entry : logEntries) {
-            printEntry(entry);
-        }
-    } else {
-        for (const auto& entry : entries) {
-            printEntry(entry);
-        }
+    for (const auto& entry : entries) {
+        printEntry(entry);
     }
 }
 
-std::vector<LogEntry> LogParser::filterByLevel(std::vector<LogEntry> entries, const std::vector<std::string>& levels) {
-    std::vector<LogEntry> filteredEntries;
-    for (const auto& entry : entries) {
-        if (std::find(levels.begin(), levels.end(), entry.logLevel) != levels.end()) {
-            filteredEntries.push_back(entry);
-        }
-    }
-    return filteredEntries;
+void LogParser::printAll() {
+    printEntries(logEntries);
 }
 
-std::vector<LogEntry> LogParser::filterBySource(std::vector<LogEntry> entries, const std::vector<std::string>& sources) {
-    std::vector<LogEntry> filteredEntries;
-    for (const auto& entry : entries) {
-        if (std::find(sources.begin(), sources.end(), entry.source) != sources.end()) {
-            filteredEntries.push_back(entry);
-        }
+// Returns true if entry passes every active filter category.
+// An empty list for a category means that category is inactive.
+static bool matches(const LogEntry& entry,
+                    const std::vector<std::string>& sources,
+                    const std::vector<std::string>& levels,
+                    const std::vector<std::string>& words) {
+    if (!sources.empty() &&
+        std::find(sources.begin(), sources.end(), entry.source) == sources.end()) {
+        return false;
     }
-    return filteredEntries;
-}
-
-std::vector<LogEntry> LogParser::filterByMessage(std::vector<LogEntry> entries, const std::vector<std::string>& words) {
-    std::vector<LogEntry> filteredEntries;
-    // TODO filter words and message to lower case ???
-    for (const auto& entry : entries) {
+    if (!levels.empty() &&
+        std::find(levels.begin(), levels.end(), entry.logLevel) == levels.end()) {
+        return false;
+    }
+    if (!words.empty()) {
+        bool anyWordHit = false;
         for (const auto& word : words) {
-            if (entry.message.find(word) != std::string::npos){
-                filteredEntries.push_back(entry);
+            if (entry.message.find(word) != std::string::npos) {
+                anyWordHit = true;
                 break;
             }
         }
+        if (!anyWordHit) return false;
     }
-    return filteredEntries;
+    return true;
 }
 
+// Expects entries sorted by timestamp
 std::vector<LogEntry> LogParser::filterByTimestamp(std::vector<LogEntry> entries, const std::string& startTime, const std::string& endTime) {
-    std::vector<LogEntry> filteredEntries;
-    for (const auto& entry : entries) {
-        if (!startTime.empty() && entry.timestamp < startTime) continue;
-        if (!endTime.empty() && entry.timestamp > endTime) continue;
-        filteredEntries.push_back(entry);
-
-    }
-    return filteredEntries;
+    size_t startIdx = 0;
+    size_t endIdx = entries.size();
+    if (!startTime.empty()) startIdx = lowerBoundByTimestamp(entries, startTime);
+    if (!endTime.empty())   endIdx   = upperBoundByTimestamp(entries, endTime);
+    return std::vector<LogEntry>(entries.begin() + startIdx, entries.begin() + endIdx);
 }
 
 std::vector<LogEntry> LogParser::filterEntries(const std::vector<std::string>& sources, const std::vector<std::string>& levels,
                                                  const std::vector<std::string>& words, const std::string& startTime, const std::string& endTime) {
-    std::vector<LogEntry> filteredEntries;
-    if (!sources.empty()) {
-        filteredEntries = filterBySource(logEntries, sources);
+    std::vector<LogEntry> timeSlice = filterByTimestamp(logEntries, startTime, endTime);
+    std::vector<LogEntry> result;
+    for (const auto& entry : timeSlice) {
+        if (matches(entry, sources, levels, words)) {
+            result.push_back(entry);
+        }
     }
-    else {
-        filteredEntries = logEntries;
-    }
-    if (!levels.empty()) {
-        filteredEntries = filterByLevel(filteredEntries, levels);
-    }
-    if (!words.empty()) {
-        filteredEntries = filterByMessage(filteredEntries, words);
-    }
-    if (startTime!= "" || endTime!= "") {
-        filteredEntries = filterByTimestamp(filteredEntries, startTime, endTime);
-    }
-    for (const auto& entry : filteredEntries) { 
-        printEntry(entry);
-    }
-    return filteredEntries;
-
+    return result;
 }

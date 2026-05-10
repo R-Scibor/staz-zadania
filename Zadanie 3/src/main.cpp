@@ -81,7 +81,7 @@ int main() {
                     std::cout << "Load a file first." << std::endl;
                     break;
                 }
-                parser.printEntries();
+                parser.printAll();
                 break;
             }
             case 3: {
@@ -91,6 +91,7 @@ int main() {
                 }
                 auto results = parser.filterEntries(filterSources, filterLevels,
                                                     filterWords, filterStartTime, filterEndTime);
+                parser.printEntries(results);
                 std::cout << "Found " << results.size() << " entries." << std::endl;
                 break;
             }

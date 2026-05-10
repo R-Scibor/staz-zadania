@@ -1,3 +1,5 @@
+#pragma once
+
 #include <string>
 #include <vector>
 #include <fstream>
@@ -14,9 +16,6 @@ struct LogEntry {
 class LogParser {
 private:
     std::vector<LogEntry> logEntries;
-    std::vector<LogEntry> filterByLevel(std::vector<LogEntry> entries, const std::vector<std::string>& levels);
-    std::vector<LogEntry> filterBySource(std::vector<LogEntry> entries, const std::vector<std::string>& sources);
-    std::vector<LogEntry> filterByMessage(std::vector<LogEntry> entries, const std::vector<std::string>& words);
     std::vector<LogEntry> filterByTimestamp(std::vector<LogEntry> entries, const std::string& startTime, const std::string& endTime);
 
 public:
@@ -24,5 +23,6 @@ public:
     std::vector<LogEntry> filterEntries(const std::vector<std::string>& sources, const std::vector<std::string>& levels, const std::vector<std::string>& words,
                                              const std::string& startTime = "", const std::string& endTime = "");
     void printEntry(LogEntry entry);
-    void printEntries(const std::vector<LogEntry>& entries = {});
+    void printEntries(const std::vector<LogEntry>& entries);
+    void printAll();
 };

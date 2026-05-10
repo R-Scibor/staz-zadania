@@ -32,6 +32,12 @@ cmake --build build --config Release
 
 The interactive menu allows loading a log file and filtering entries by source, level, message content, and time range — individually or in any combination.
 
+Filters combine as OR within a category and AND across categories: e.g. `level=ERROR,WARN` and `source=DB` matches entries where level is ERROR or WARN *and* source is DB.
+
+## Engine notes
+
+Entries are sorted by timestamp at load. Time-range queries use `lower_bound`/`upper_bound` (O(log n)) to extract a contiguous slice; source, level and message filters then run linearly over that slice, with substring matching applied last on the smallest set.
+
 ## Tests
 
 ```bash

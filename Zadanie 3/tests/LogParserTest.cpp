@@ -7,6 +7,14 @@ TEST(LogParserTest, ParseReturnsCorrectCount) {
     EXPECT_EQ(entries.size(), 5);
 }
 
+TEST(LogParserTest, ParseSkipsMalformedLines) {
+    LogParser parser;
+    auto entries = parser.parseLogFile("malformed.txt");
+    EXPECT_EQ(entries.size(), 2);
+    EXPECT_EQ(entries[0].message, "Valid line one");
+    EXPECT_EQ(entries[1].message, "Valid line two");
+}
+
 TEST(LogParserTest, FilterByLevelReturnsCorrectEntries) {
     LogParser parser;
     parser.parseLogFile("logs.txt");

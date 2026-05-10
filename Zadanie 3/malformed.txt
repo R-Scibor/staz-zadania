@@ -1,0 +1,6 @@
+[2023-10-25T10:00:00] [INFO] [AuthService] Valid line one
+this line has no brackets at all
+[2023-10-25T10:05:12 [ERROR] [Database] Missing closing bracket on timestamp
+[2023-10-25T10:10:00] INFO [AuthService] Missing brackets around level
+too few fields
+[2023-10-25T10:25:00] [INFO] [Payment] Valid line two
