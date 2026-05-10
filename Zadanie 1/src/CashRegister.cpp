@@ -41,3 +41,22 @@ std::optional<std::map<int, int>> CashRegister::makeChange(int amount) const {
     }
     return result;
 }
+
+std::optional<std::map<int, int>> CashRegister::acceptPayment(const std::vector<int>& inserted, int price) {
+    if (price < 0) return std::nullopt;
+
+    int total = 0;
+    for (int c : inserted) total += c;
+    if (total < price) return std::nullopt;
+
+    for (int c : inserted) coins[c]++;
+
+    auto change = makeChange(total - price);
+    if (!change) {
+        for (int c : inserted) coins[c]--;
+        return std::nullopt;
+    }
+
+    for (const auto& [denom, count] : *change) coins[denom] -= count;
+    return change;
+}

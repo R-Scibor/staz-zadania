@@ -75,3 +75,38 @@ TEST(CashRegister, PrefersFewerCoins) {
     EXPECT_EQ(totalCoins(*change), 1);
     EXPECT_EQ((*change)[100], 1);
 }
+
+TEST(CashRegister, AcceptPaymentExactNoChange) {
+    CashRegister r({{50, 1}});
+    auto change = r.acceptPayment({100, 50}, 150);
+    ASSERT_TRUE(change.has_value());
+    EXPECT_TRUE(change->empty());
+    EXPECT_EQ(r.getCoins().at(100), 1);
+    EXPECT_EQ(r.getCoins().at(50), 2);
+}
+
+TEST(CashRegister, AcceptPaymentReturnsChangeAndUpdatesDrawer) {
+    CashRegister r({{50, 1}});
+    auto change = r.acceptPayment({200}, 150);
+    ASSERT_TRUE(change.has_value());
+    EXPECT_EQ(totalValue(*change), 50);
+    EXPECT_EQ((*change)[50], 1);
+    EXPECT_EQ(r.getCoins().at(200), 1);
+    EXPECT_EQ(r.getCoins().at(50), 0);
+}
+
+TEST(CashRegister, AcceptPaymentInsufficientLeavesDrawerUnchanged) {
+    std::map<int, int> initial{{100, 5}, {50, 2}};
+    CashRegister r(initial);
+    auto change = r.acceptPayment({100}, 150);
+    EXPECT_FALSE(change.has_value());
+    EXPECT_EQ(r.getCoins(), initial);
+}
+
+TEST(CashRegister, AcceptPaymentCantMakeChangeLeavesDrawerUnchanged) {
+    std::map<int, int> initial{{200, 2}};
+    CashRegister r(initial);
+    auto change = r.acceptPayment({200, 200}, 350);
+    EXPECT_FALSE(change.has_value());
+    EXPECT_EQ(r.getCoins(), initial);
+}
