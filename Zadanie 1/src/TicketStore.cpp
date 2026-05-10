@@ -28,7 +28,7 @@ bool TicketStore::cancel(int reservationId) {
     return true;
 }
 
-std::optional<int> TicketStore::finalize(int reservationId, clock::time_point now) {
+std::optional<int> TicketStore::finalize(int reservationId, const std::string& name, clock::time_point now) {
     std::lock_guard<std::mutex> lock(mtx);
     auto it = active.find(reservationId);
     if (it == active.end()) return std::nullopt;
@@ -37,8 +37,17 @@ std::optional<int> TicketStore::finalize(int reservationId, clock::time_point no
         active.erase(it);
         return std::nullopt;
     }
+    int number = nextTicketNumber++;
+    issued[number] = IssuedTicket{number, it->second.type, name, now};
     active.erase(it);
-    return nextTicketNumber++;
+    return number;
+}
+
+std::optional<TicketStore::IssuedTicket> TicketStore::getIssued(int ticketNumber) const {
+    std::lock_guard<std::mutex> lock(mtx);
+    auto it = issued.find(ticketNumber);
+    if (it == issued.end()) return std::nullopt;
+    return it->second;
 }
 
 int TicketStore::releaseExpired(clock::time_point now) {

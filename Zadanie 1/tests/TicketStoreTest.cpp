@@ -37,11 +37,24 @@ TEST(TicketStore, FinalizeProducesSequentialTicketNumbers) {
     auto t0 = TicketStore::clock::now();
     auto a = s.reserve("normal", t0);
     auto b = s.reserve("normal", t0);
-    auto numA = s.finalize(*a, t0);
-    auto numB = s.finalize(*b, t0);
+    auto numA = s.finalize(*a, "Jan", t0);
+    auto numB = s.finalize(*b, "Anna", t0);
     ASSERT_TRUE(numA.has_value() && numB.has_value());
     EXPECT_NE(*numA, *numB);
     EXPECT_EQ(s.getAvailable()["normal"], 0);
+}
+
+TEST(TicketStore, FinalizeBindsTicketToHolder) {
+    TicketStore s({{"normal", 1}}, 60s);
+    auto t0 = TicketStore::clock::now();
+    auto id = s.reserve("normal", t0);
+    auto number = s.finalize(*id, "Jan Kowalski", t0);
+    ASSERT_TRUE(number.has_value());
+    auto issued = s.getIssued(*number);
+    ASSERT_TRUE(issued.has_value());
+    EXPECT_EQ(issued->holderName, "Jan Kowalski");
+    EXPECT_EQ(issued->type, "normal");
+    EXPECT_EQ(issued->ticketNumber, *number);
 }
 
 TEST(TicketStore, ExpiredReservationCannotBeFinalized) {
@@ -49,7 +62,7 @@ TEST(TicketStore, ExpiredReservationCannotBeFinalized) {
     auto t0 = TicketStore::clock::now();
     auto id = s.reserve("normal", t0);
     ASSERT_TRUE(id.has_value());
-    EXPECT_FALSE(s.finalize(*id, t0 + 2s).has_value());
+    EXPECT_FALSE(s.finalize(*id, "Jan", t0 + 2s).has_value());
     EXPECT_EQ(s.getAvailable()["normal"], 1);
 }
 
